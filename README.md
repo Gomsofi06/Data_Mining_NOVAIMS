@@ -1,7 +1,7 @@
 # Data_Mining_2425
 Project for the Data Mining class of the Master in Data Science at NOVA IMS. <br>
 
-Made in colaboration with Marta Boavida, Jan Louis, Matilde Miguel. <br>
+Made in colaboration with Marta Boavida, Jan-Louis Schneider, Matilde Miguel. <br>
 
 ## ABCDEats Inc.
 
