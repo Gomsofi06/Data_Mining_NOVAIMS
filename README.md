@@ -10,3 +10,10 @@ In this project, you will act as consultants for ABCDEats Inc. (ABCDE), a fictio
 We recommend segmenting customers using multiple perspectives. Examples of segmentation perspec- tives include value-based segmentation, which groups customers by their economic value; preference or behaviour-based segmentation which focuses on purchasing habits; and demographic segmentation which categorises customers by attributes like age, gender, and income to understand different interaction pat- terns. <br>
 
 Ultimately, the company seeks a final segmentation that integrates these perspectives to enable them to develop a comprehensive marketing strategy.
+
+### Libraries
+
+#### Save libraries
+pip freeze > requirements.txt
+#### Install libraries
+pip install requirements.txt
