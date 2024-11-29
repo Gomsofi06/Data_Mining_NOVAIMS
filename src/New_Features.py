@@ -21,13 +21,13 @@
 # 
 # ** **
 
-# In[1]:
+# In[40]:
 
 
 get_ipython().system('jupyter nbconvert --to script "Processing_Data.ipynb"')
 
 
-# In[2]:
+# In[41]:
 
 
 import pandas as pd 
@@ -49,7 +49,7 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
 
-# In[3]:
+# In[42]:
 
 
 df = pd.read_csv("../dataset/df_preprocessing.csv")
@@ -62,7 +62,7 @@ df = pd.read_csv("../dataset/df_preprocessing.csv")
 # #### <span style="color:salmon"> 3.1.1 Customer Lifetime  </span>
 # Interval of customer activity, so we have an idea of ​​how many days the customer ordered.
 
-# In[4]:
+# In[43]:
 
 
 df['lifetime_days'] = df['last_order'] - df['first_order']
@@ -72,7 +72,7 @@ df['lifetime_days'].dtype
 # #### <span style="color:salmon"> 3.1.2 Most frequent order day of the week  </span>
 # Indicates the days of the week on which the customer placed the most orders.
 
-# In[5]:
+# In[44]:
 
 
 dows = ['DOW_1', 'DOW_2', 'DOW_3', 'DOW_4', 'DOW_5', 'DOW_6', 'DOW_0'] # this order so it is from Monday to Sunday, not Sunday to Saturday]
@@ -95,7 +95,7 @@ all(isinstance(i, list) for i in df['preferred_order_days']) # confirm that all 
 # 18h-00h --> Evening (Dinner)  
 # 00h-6h --> Night
 
-# In[6]:
+# In[45]:
 
 
 def part_of_the_day(hour):
@@ -140,7 +140,7 @@ all(isinstance(i, list) for i in df['preferred_part_of_day']) # confirm that all
 # #### <span style="color:salmon"> 3.1.4 Total monetary units spend </span>
 # Sum all total expenses.
 
-# In[7]:
+# In[46]:
 
 
 cuisine = df.filter(like='CUI_').columns.tolist() # Types of cuisine
@@ -151,7 +151,7 @@ df['total_expenses'].dtype
 # #### <span style="color:salmon"> 3.1.5 Average monetary units per product </span>
 # Show the average monetary of all products.
 
-# In[8]:
+# In[47]:
 
 
 df['avg_per_product'] = pd.to_numeric(df['total_expenses'] / df['product_count'].replace(0, pd.NA), errors='coerce')
@@ -161,7 +161,7 @@ df['avg_per_product'].dtype
 # #### <span style="color:salmon"> 3.1.6 Average monetary units per order </span>
 # Show the average monetary per order. 
 
-# In[9]:
+# In[48]:
 
 
 df['avg_per_order'] = pd.to_numeric(df['total_expenses'] / df[dows].sum(axis=1).replace(0, pd.NA), errors='coerce')
@@ -171,7 +171,7 @@ df['avg_per_order'].dtype
 # #### <span style="color:salmon"> 3.1.7 Average order size </span>
 # Help identifying users who make larger orders.
 
-# In[10]:
+# In[49]:
 
 
 df['avg_order_size'] = pd.to_numeric(df['product_count'] / df[dows].sum(axis=1).replace(0, pd.NA), errors='coerce')
@@ -181,7 +181,7 @@ df['avg_order_size'].dtype
 # #### <span style="color:salmon"> 3.1.8 Culinary profile </span>
 # A proportion of ordered cuisines. A higher number indicates more diversity of types of cuisine you ordered.
 
-# In[11]:
+# In[50]:
 
 
 total_cuisine = len(cuisine)
@@ -193,7 +193,7 @@ df['culinary_variety'].dtype
 # #### <span style="color:salmon"> 3.1.9 Loyalty to chain restaurants </span>
 # Proportion of orders from restaurant chains. A high value indicates that you prefer to try different restaurant chains. A lower value is only more faithful to certain chains.
 
-# In[12]:
+# In[51]:
 
 
 df['chain_preference'] = pd.to_numeric(df['is_chain'] / df[dows].sum(axis=1).replace(0, pd.NA), errors='coerce')
@@ -203,7 +203,7 @@ df['chain_preference'].dtype
 # #### <span style="color:salmon"> 3.1.10 Loyalty to venders </span>
 # Proportion of orders from specific restaurants. A high value indicates that you prefer to try different restaurants. A lower tend to be more loyal to specific restaurants.
 
-# In[13]:
+# In[52]:
 
 
 df['loyalty_to_venders'] = pd.to_numeric(df['vendor_count'] / df[dows].sum(axis=1).replace(0, pd.NA), errors='coerce')
@@ -212,7 +212,7 @@ df['loyalty_to_venders'].dtype
 
 # To see all the new features that we added:
 
-# In[14]:
+# In[53]:
 
 
 df.head(20)
@@ -222,7 +222,7 @@ df.head(20)
 
 # New metric and non metric features:
 
-# In[15]:
+# In[54]:
 
 
 new_metric_features = ['lifetime_days', 'total_expenses', 'avg_per_product', 'avg_per_order', 'avg_order_size', 'culinary_variety', 'chain_preference', 'loyalty_to_venders']
@@ -232,7 +232,7 @@ new_features = new_metric_features + new_non_metric_features
 
 # Descriptives:
 
-# In[16]:
+# In[55]:
 
 
 df[new_features].describe(include="all").T
@@ -240,13 +240,13 @@ df[new_features].describe(include="all").T
 
 # Missing values:
 
-# In[17]:
+# In[56]:
 
 
 missing_rows = df[new_features].isna().any(axis=1)
 
 
-# In[18]:
+# In[57]:
 
 
 # Percentage of missing values in each variable:
@@ -256,9 +256,9 @@ missing_percentage = missing_percentage[missing_percentage > 0]
 print(f"Percentage of missing values:\n {missing_percentage}")
 
 
-# VISUALIZING NEW METRIC FEATURES (NUMERICAL):
+# Visualize new numerical metric features:
 
-# In[19]:
+# In[58]:
 
 
 sns.set()
@@ -282,9 +282,9 @@ plt.tight_layout()
 plt.show()
 
 
-# ### 1. VISUALIZING NEW NON-METRIC FEATURES (CATEGORICAL):
+# Visualize new non-numerical features:
 
-# In[20]:
+# In[59]:
 
 
 for column in new_non_metric_features:
@@ -315,7 +315,7 @@ for column in new_non_metric_features:
 
 # Treat missing values in new features:
 
-# In[21]:
+# In[60]:
 
 
 # Percentage of missing values in each variable:
@@ -325,40 +325,42 @@ missing_percentage = missing_percentage[missing_percentage > 0]
 print(f"Percentage of missing values:\n {missing_percentage}")
 
 
-# In[22]:
-
-
 # Fill numerical missing values with median:
+
+# In[61]:
+
+
 median_variables = ['avg_per_product', 'avg_per_order', 'avg_order_size', 'chain_preference', 'loyalty_to_venders']
 for column in median_variables:
     median_value = df[column].median()
     df[column] = df[column].fillna(median_value)
 
 
-# In[23]:
-
-
 # Percentage of missing values in each variable:
+
+# In[62]:
+
+
 missing_percentage = ((df[new_features].isnull().sum() / len(df)) * 100).sort_values(ascending=False)
 missing_percentage = missing_percentage[missing_percentage > 0]
 
 print(f"Percentage of missing values:\n {missing_percentage}")
 
 
-# In[24]:
+# Store the index of rows with missing values in new_features and filter the DataFrame using the index:
+
+# In[63]:
 
 
-# Store the index of rows with missing values in new_features
 missing_rows_index = df[missing_rows].index
 
-# Filter the DataFrame using the index
 df_missing = df.loc[missing_rows_index]
 df_missing
 
 
-# Outliers - New features:
+# Outliers:
 
-# In[25]:
+# In[64]:
 
 
 sns.set()
@@ -388,9 +390,9 @@ plt.tight_layout()
 plt.show()
 
 
-# Outlier Removal:
+# Outlier Removal using automatic method:
 
-# In[26]:
+# In[65]:
 
 
 # Compute the interquartile range
@@ -408,17 +410,19 @@ for feature in new_metric_features:
 
 # Observations in which all features are outliers:
 
-# In[27]:
+# In[66]:
 
 
 outliers, obvious_outliers = identify_outliers(df, new_metric_features, lower_lim, upper_lim)
 
 
-# Conclusion: There is no observation in which all new features is an outlier. There is no outlier in 'lifetime_days', 'chain_preference'.
+# Conclusion: There is no observation in which all new features is an outlier. 
+# 
+# There is no outlier in 'lifetime_days', 'chain_preference'.
 # 
 # Check if there is any observation only with outliers, except on these features.
 
-# In[28]:
+# In[67]:
 
 
 new_metric_features_test = ['total_expenses', 'avg_per_product', 'avg_per_order', 'avg_order_size', 'culinary_variety', 'loyalty_to_venders']
@@ -429,7 +433,7 @@ outliers, obvious_outliers = identify_outliers(df, new_metric_features_test, low
 
 # Observations in which at least one new feature is an outlier:
 
-# In[29]:
+# In[68]:
 
 
 new_filters_iqr = []                                            
@@ -441,13 +445,13 @@ for metric in new_metric_features:
 new_filters_iqr_all = pd.concat(new_filters_iqr, axis=1).all(axis=1)
 
 
-# In[30]:
+# In[69]:
 
 
 new_filters_iqr_all
 
 
-# In[31]:
+# In[70]:
 
 
 # Number of observations with at least one features considered an outlier
@@ -457,9 +461,9 @@ print(f"Percentage of observations with at least one features considered an outl
 print(f"Percentage of data kept after removing outliers: {new_features_percentage_data_kept}%")
 
 
-# 2. MANUAL METHOD:
+# Outliers removal using manual method:
 
-# In[32]:
+# In[71]:
 
 
 filters_manual_new_features = (
@@ -479,7 +483,7 @@ filters_manual_new_features = (
 df_out_man_new_features = df[filters_manual_new_features]
 
 
-# In[33]:
+# In[72]:
 
 
 # Number of observations with at least one features considered an outlier
@@ -491,7 +495,7 @@ print(f"Percentage of data kept after removing outliers: {new_features_percentag
 
 # Remove outliers combining automatic and manual methods:
 
-# In[34]:
+# In[73]:
 
 
 df = df[(new_filters_iqr_all | filters_manual_new_features)]
@@ -499,7 +503,7 @@ df = df[(new_filters_iqr_all | filters_manual_new_features)]
 
 # ## <span style="color:salmon">3.3 Visualize all features </span> 
 
-# In[35]:
+# In[74]:
 
 
 all_metric_features = [
@@ -526,7 +530,7 @@ len(all_metric_features)
 
 # #### <span style="color:salmon"> 3.3.1 Numerical Features </span>
 
-# In[36]:
+# In[75]:
 
 
 sns.set()
@@ -552,7 +556,7 @@ plt.show()
 
 # #### <span style="color:salmon"> 3.3.2 Categorical Features </span>
 
-# In[37]:
+# In[76]:
 
 
 for column in all_non_metric_features:
@@ -581,11 +585,12 @@ for column in all_non_metric_features:
     plt.show()
 
 
-# In[38]:
+# In[77]:
 
 
-df__new_features = pd.DataFrame(df)
+# Store in df_new_features the DataFrame of our dataset df
+df_new_features = pd.DataFrame(df)
 
 # Save to CSV
-df__new_features.to_csv('../dataset/df_new_features.csv', index=False)
+df_new_features.to_csv('../dataset/df_new_features.csv', index=False)
 

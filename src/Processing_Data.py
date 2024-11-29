@@ -22,7 +22,7 @@
 # ** **
 # 
 
-# In[1]:
+# In[37]:
 
 
 import pandas as pd 
@@ -42,17 +42,19 @@ pd.set_option("display.max_columns", None)
 pd.set_option("display.max_rows", None)
 
 
-# In[2]:
+# In[38]:
 
 
 df = pd.read_csv("../dataset/df_explore.csv")
 
 
-# ## <span style="color:salmon"> <center>Pre-processing Data</center> </span> 
+# ## <span style="color:salmon">2. Pre-processing Data </span> 
 
 # #### <span style="color:salmon">2.1 Features</span> 
 
-# In[3]:
+# First, we need to divide the columns that have metric features:
+
+# In[39]:
 
 
 non_metric_features = ["customer_region", "last_promo", "payment_method"]
@@ -62,7 +64,9 @@ metric_features
 
 # ##### <span style="color:salmon"> 2.1.1 Numerical features </span>
 
-# In[4]:
+# To see better the distribution of metric features, we need to create histograms:
+
+# In[40]:
 
 
 sns.set()
@@ -88,7 +92,7 @@ plt.show()
 
 # Plotting variables excluding zero, because it biases the scaling: (used to define outliers threshold)
 
-# In[5]:
+# In[41]:
 
 
 CUI_variables = ["CUI_American", "CUI_Asian", "CUI_Beverages", "CUI_Cafe", 
@@ -128,7 +132,9 @@ plt.show()
 
 # ##### <span style="color:salmon"> 2.1.2 Categorical features </span>
 
-# In[6]:
+# Now, we do the same for the non-metric features:
+
+# In[42]:
 
 
 for column in non_metric_features:
@@ -159,7 +165,9 @@ for column in non_metric_features:
 
 # #### <span style="color:salmon"> 2.2 Missing Values </span> 
 
-# In[7]:
+# Dealing with missing values effectively is crucial to ensure our dataset's integrity and the accuracy of your analysis. 
+
+# In[43]:
 
 
 # Check percentage of missing values:
@@ -169,7 +177,9 @@ missing_percentage = missing_percentage[missing_percentage > 0]
 print(f"Percentage of missing values:\n {missing_percentage}")
 
 
-# In[8]:
+# In case of numerical features, the strategie we used to deal with missing values is input with the median:
+
+# In[44]:
 
 
 # Input missing values in numerical features using median:
@@ -179,7 +189,7 @@ for column in median_variables:
     df[column] = df[column].fillna(median_value)
 
 
-# In[9]:
+# In[45]:
 
 
 # Check percentage of missing values:
@@ -189,7 +199,9 @@ missing_percentage = missing_percentage[missing_percentage > 0]
 print(f"Percentage of missing values:\n {missing_percentage}")
 
 
-# In[10]:
+# In case of categorical features, the strategie we used to deal with missing values is input with the mode:
+
+# In[46]:
 
 
 # Input missing values in categorical features using mode:
@@ -199,7 +211,7 @@ for column in mode_variables:
     df[column] = df[column].fillna(mode_value)
 
 
-# In[11]:
+# In[47]:
 
 
 # Check percentage of missing values:
@@ -209,13 +221,15 @@ missing_percentage = missing_percentage[missing_percentage > 0]
 print(f"Percentage of missing values:\n {missing_percentage}")
 
 
-# In[12]:
+# In[48]:
 
 
 missing_percentage_first_order = df.loc[df["first_order"].isna()]
 
 
-# In[13]:
+# In order to threat the missing values in first_order, we use the technique KNNImputer, which for each point with missing values, finds the K nearest neighbors based on a distance metric and replaces the missing value with the average value of the K nearest neighbors. 
+
+# In[49]:
 
 
 # Input missing values in first_order using knn:
@@ -239,43 +253,44 @@ df.loc[df["first_order"].isna(), "first_order"] = imputed_values[:, 0]
 print("Missing values in first_order have been imputed using KNN.")
 
 
-# In[14]:
-
-
 # Check if missing values have been imputed for first_order:
+
+# In[50]:
+
+
 df.loc[missing_percentage_first_order.index]
 
 
-# NOTE: HR_0 has only 1 unique value = 0, I dont think its informative. consider to drop the variable!
-
 # #### <span style="color:salmon"> 2.3 Strange values </span> 
 
-# Product_count vs vendor_count:
+# Check the stange values Product_count == 0 and vendor_count >= 1:
 
-# In[15]:
+# In[51]:
 
 
 df.loc[(df["product_count"]==0) & (df["vendor_count"]>=1)]
 
 
-# In[16]:
+# Replace product_count = 0 with NaN for these rows:
+
+# In[52]:
 
 
-# Replace product_count = 0 with NaN for these rows
 df.loc[(df["product_count"] == 0) & (df["vendor_count"] >= 1), "product_count"] = np.nan
 
 
-# In[17]:
+# In[53]:
 
 
 product_vendor_count_missing = df.loc[(df["product_count"].isna()) & (df["vendor_count"] >= 1)]
 product_vendor_count_missing
 
 
-# In[18]:
+# Input missing values in product_count using KNNImputer:
+
+# In[54]:
 
 
-# Input missing values in product_count using knn:
 knn_rows = df.loc[df["product_count"].isna()]
 
 features_for_imputation = metric_features.drop(["product_count", "customer_age", "is_chain", "CUI_American", "CUI_Asian", "CUI_Beverages", "CUI_Cafe", 
@@ -296,7 +311,7 @@ df.loc[df["product_count"].isna(), "product_count"] = imputed_values[:, 0]
 print("Missing values in product_count have been imputed using KNN.")
 
 
-# In[19]:
+# In[55]:
 
 
 # Check if missing values have been imputed for product_count:
@@ -305,9 +320,15 @@ df.loc[product_vendor_count_missing.index]
 
 # #### <span style="color:salmon">2.4 Outliers </span> 
 
+# Outliers are data points that deviate significantly from the rest of the observations in a dataset.
+# 
+#  They can result from variability in the data or errors during data collection, entry, or processing.
+# 
+# So, we have to threat them.
+
 # ##### <span style="color:salmon">2.4.1 Outliers visualization </span> 
 
-# In[20]:
+# In[56]:
 
 
 sns.set()
@@ -333,9 +354,15 @@ plt.show()
 
 # ##### <span style="color:salmon">2.4.2 Outliers removal </span> 
 
-# 1. AUTOMATIC METHOD:
+# There is two methods to treat with outliers:
+# 1. Automatic method 
+# 2. Manual method
+# 
+# We will try those two and compare which is better in our database.
 
-# In[21]:
+# 1. Using the Automatic method:
+
+# In[57]:
 
 
 # Compute the inter-quartile range
@@ -353,7 +380,7 @@ for feature in metric_features:
 
 # Observations in which all features are outliers:
 
-# In[22]:
+# In[58]:
 
 
 def identify_outliers(dataframe, metric_features, lower_lim, upper_lim):
@@ -414,7 +441,7 @@ outliers, obvious_outliers = identify_outliers(df, metric_features, lower_lim, u
 # 
 # Check if there is any observation only with outliers, except on these features.
 
-# In[23]:
+# In[59]:
 
 
 metric_features_test = metric_features.drop(['HR_0', 'last_order', 'first_order'])
@@ -425,7 +452,7 @@ outliers, obvious_outliers = identify_outliers(df, metric_features_test, lower_l
 
 # Observations in which at least one feature is an outlier:
 
-# In[24]:
+# In[60]:
 
 
 filters_iqr = []                                            
@@ -437,13 +464,13 @@ for metric in metric_features:
 filters_iqr_all = pd.concat(filters_iqr, axis=1).all(axis=1)
 
 
-# In[25]:
+# In[61]:
 
 
 filters_iqr_all
 
 
-# In[26]:
+# In[62]:
 
 
 len(df[~filters_iqr_all])
@@ -456,9 +483,9 @@ print(f"Percentage of data kept after removing outliers: {percentage_data_kept}%
 
 # Conclusion: All observations have outliers in some feature
 
-# 2. MANUAL METHOD:
+# 2. Using the manual method:
 
-# In[27]:
+# In[63]:
 
 
 filters_manual1 = (
@@ -564,13 +591,13 @@ filters_manual1 = (
 df_out_man1 = df[filters_manual1]
 
 
-# In[28]:
+# In[64]:
 
 
 print('Percentage of data kept after removing outliers:', 100*(np.round(df_out_man1.shape[0] / df.shape[0], decimals=5)))
 
 
-# In[29]:
+# In[65]:
 
 
 filters_manual2 = (
@@ -676,13 +703,13 @@ filters_manual2 = (
 df_out_man2 = df[filters_manual2]
 
 
-# In[30]:
+# In[66]:
 
 
 print('Percentage of data kept after removing outliers:', 100*(np.round(df_out_man2.shape[0] / df.shape[0], decimals=5)))
 
 
-# In[31]:
+# In[67]:
 
 
 filters_manual3 = (
@@ -788,7 +815,7 @@ filters_manual3 = (
 df_out_man3 = df[filters_manual3]
 
 
-# In[32]:
+# In[68]:
 
 
 # Number of observations with at least one features considered an outlier
@@ -798,17 +825,18 @@ print(f"Percentage of observations with at least one features considered an outl
 print(f"Percentage of data kept after removing outliers: {percentage_data_kept_manual}%")
 
 
-# Remove outliers combining automatic and manual approaches:
+# We conclude that we should see what is common to both methods and remove only that because the automatic method is removing a very high percentage of the data.
 
-# In[33]:
+# In[69]:
 
 
 df = df[(filters_iqr_all | filters_manual3)]
 
 
-# In[34]:
+# In[70]:
 
 
+# Store in df_preprocessing the DataFrame of our dataset df
 df_preprocessing = pd.DataFrame(df)
 
 # Save to CSV
