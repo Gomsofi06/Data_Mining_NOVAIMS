@@ -24,7 +24,7 @@ import joblib
 plot_color = '#568789'
 custom_cmap = LinearSegmentedColormap.from_list("custom_gradient", ['#568789', '#efb440'])
 
-# Visualizations
+
 
 def plot_missing_values_dendrogram(df, figsize=(10, 6), leaf_rotation=90, leaf_font_size=10, title='Dendrogram of Missing Values'):
     missing_matrix = df.isnull().astype(int)
@@ -138,3 +138,53 @@ def plot_categorical_features(categorical_df, max_features_per_plot=6, figsize=(
 def float_to_int(df, columns):
     for col in columns:
         df[col] = df[col].astype('Int64')
+        
+def identify_outliers(dataframe, metric_features, lower_lim, upper_lim):
+    outliers = {}
+    obvious_outliers = []
+
+    for metric in metric_features:
+        if metric not in dataframe.columns:
+            continue
+        
+        if metric not in lower_lim or metric not in upper_lim:
+            continue
+        
+        outliers[metric] = []
+        llim = lower_lim[metric]
+        ulim = upper_lim[metric]
+        
+        for i, value in enumerate(dataframe[metric]):
+            if pd.isna(value):
+                continue
+            
+            if value < llim or value > ulim:
+                outliers[metric].append(value)
+        
+        print(f"Total outliers in {metric}: {len(outliers[metric])}")
+
+    # Check for observations that are outliers in all features (Obvious Outliers)
+    for index, row in dataframe.iterrows():
+        is_global_outlier = True
+        for metric in metric_features:
+            if metric not in dataframe.columns or metric not in lower_lim or metric not in upper_lim:
+                is_global_outlier = False
+                break
+            
+            value = row[metric]
+            if pd.isna(value):
+                is_global_outlier = False
+                break
+            
+            llim = lower_lim[metric]
+            ulim = upper_lim[metric]
+            
+            if llim <= value <= ulim:
+                is_global_outlier = False
+                break
+        
+        if is_global_outlier:
+            obvious_outliers.append(index)
+    print("-----------------------------")
+    print(f"Total global outliers: {len(obvious_outliers)}")
+    return outliers, obvious_outliers

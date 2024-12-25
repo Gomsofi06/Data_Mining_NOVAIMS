@@ -40,7 +40,7 @@
 # 
 # 5. [Handling Missing Values](#five-bullet) <br>
 # 
-# 6. [Removing Outliers  & Changing Distributions](#six-bullet) <br>
+# 6. [Removing Outliers](#six-bullet) <br>
 # 
 # 7. [Export Datasets](#seven-bullet) <br> 
 # 
@@ -101,7 +101,7 @@ numerical_features = ['customer_age', 'vendor_count', 'product_count', 'is_chain
                       'CUI_Desserts', 'CUI_Healthy', 'CUI_Indian', 'CUI_Italian',
                       'CUI_Japanese', 'CUI_Noodle Dishes', 'CUI_OTHER',
                       'CUI_Street Food / Snacks', 'CUI_Thai', 'DOW_0', 'DOW_1', 'DOW_2',
-                      'DOW_3', 'DOW_4', 'DOW_5', 'DOW_6', 'HR_0', 'HR_1', 'HR_2', 'HR_3',
+                      'DOW_3', 'DOW_4', 'DOW_5', 'DOW_6', 'HR_1', 'HR_2', 'HR_3',
                       'HR_4', 'HR_5', 'HR_6', 'HR_7', 'HR_8', 'HR_9', 'HR_10', 'HR_11',
                       'HR_12', 'HR_13', 'HR_14', 'HR_15', 'HR_16', 'HR_17', 'HR_18', 'HR_19',
                       'HR_20', 'HR_21', 'HR_22', 'HR_23'
@@ -128,11 +128,11 @@ float_to_int(df, ['customer_age', 'first_order', 'HR_0'])
 # 
 # <a href="#top">Top &#129033;</a>
 
-# ## <span style="color:yellow"> O QUE FAZER COM AS INCOERENCIAS?</span> 
-# 
-# ## <span style="color:yellow"> CHECK FOR MORE INCOERENCIAS</span> 
+# ## <span style="color:yellow"> CHECK FOR MORE INCOERENCIAS (feito do iane já, menos aquela primeira aqui embaixo)</span> 
 
 # 1. The mean of product_count is 5 and exists one number with value 269
+
+# (opiniao do iane: pra mim isso é um outlier e nao uma incoerencia)
 
 # In[6]:
 
@@ -148,9 +148,15 @@ df.loc[(df["product_count"]==269)]
 df['HR_0'].max()
 
 
+# In[8]:
+
+
+df = df.drop(columns=['HR_0'])
+
+
 # 3. Product_count == 0 and vendor_count >= 1:
 
-# In[8]:
+# In[9]:
 
 
 df.loc[(df["product_count"]==0) & (df["vendor_count"]>=1)]
@@ -158,17 +164,47 @@ df.loc[(df["product_count"]==0) & (df["vendor_count"]>=1)]
 
 # Replace product_count = 0 with NaN for these rows:
 
-# In[9]:
+# In[10]:
 
 
 df.loc[(df["product_count"] == 0) & (df["vendor_count"] >= 1), "product_count"] = np.nan
 
 
-# In[10]:
+# In[11]:
 
 
 product_vendor_count_missing = df.loc[(df["product_count"].isna()) & (df["vendor_count"] >= 1)]
 product_vendor_count_missing
+
+
+# In[12]:
+
+
+df.columns
+
+
+# 4. 138 columns where product count and vendor count == 0, --> incoherency because they are not a customer if they did not make an order yet.
+
+# In[13]:
+
+
+df[(df['vendor_count'] == 0) | (df['product_count'] == 0)].count()
+
+
+# they also have 0 for all cuisines and hours of day, but have sometimes 1 for is_chain, have dates for first_order and last_order (sometimes even different ones, which would suggest multiple orders have been made) and also have last_promo and payment_method.
+
+# In[14]:
+
+
+df[(df['vendor_count'] == 0) | (df['product_count'] == 0)]
+
+
+# Decision: drop because less than 0.5% percent affected and these rows have no impact on most features since no product/vendor count and no expenes in cuisines/hours of day, also inconsistent due to missing logic.
+
+# In[15]:
+
+
+df = df[~((df['vendor_count'] == 0) | (df['product_count'] == 0))]
 
 
 # <a class="anchor" id="five-bullet"> 
@@ -181,7 +217,7 @@ product_vendor_count_missing
 # 
 # So, first we check the percentage of missing values:
 
-# In[11]:
+# In[16]:
 
 
 missing_percentage = ((df.isnull().sum() / len(df)) * 100).sort_values(ascending=False)
@@ -193,17 +229,17 @@ print(f"Percentage of missing values:\n{missing_percentage}")
 
 # 1. In case of numerical features, the strategie we used to deal with missing values is input with the median:
 
-# In[12]:
+# In[17]:
 
 
 # Input missing values in numerical features using median:
-median_variables = ["customer_age", "HR_0"]
+median_variables = ["customer_age"]
 for column in median_variables:
     median_value = df[column].median()
     df[column] = df[column].fillna(median_value)
 
 
-# In[13]:
+# In[18]:
 
 
 missing_percentage = ((df.isnull().sum() / len(df)) * 100).sort_values(ascending=False)
@@ -214,7 +250,7 @@ print(f"Percentage of missing values:\n {missing_percentage}")
 
 # In order to threat the missing values in first_order, we use the technique KNNImputer, which for each point with missing values, finds the K nearest neighbors based on a distance metric and replaces the missing value with the average value of the K nearest neighbors. 
 
-# In[14]:
+# In[19]:
 
 
 # Input missing values in first_order using knn:
@@ -222,7 +258,7 @@ print(f"Percentage of missing values:\n {missing_percentage}")
 knn_rows = df.loc[df["first_order"].isna()]
 
 features_for_imputation = ["last_order", "product_count", "vendor_count", "DOW_0", "DOW_1", "DOW_2", "DOW_3", "DOW_4", "DOW_5", "DOW_6",  
-                            "HR_0", "HR_1", "HR_2", "HR_3", "HR_4", "HR_5", "HR_6", "HR_7", "HR_8", "HR_9", "HR_10", "HR_11", "HR_12", "HR_13", 
+                            "HR_1", "HR_2", "HR_3", "HR_4", "HR_5", "HR_6", "HR_7", "HR_8", "HR_9", "HR_10", "HR_11", "HR_12", "HR_13", 
                             "HR_14", "HR_15", "HR_16", "HR_17", "HR_18", "HR_19", "HR_20", "HR_21", "HR_22", "HR_23",
                             "CUI_American", "CUI_Asian", "CUI_Beverages", "CUI_Cafe", "CUI_Chicken Dishes", "CUI_Chinese", "CUI_Desserts", 
                             "CUI_Healthy", "CUI_Indian", "CUI_Italian", "CUI_Japanese", "CUI_Noodle Dishes", "CUI_OTHER", "CUI_Street Food / Snacks", "CUI_Thai"]
@@ -240,7 +276,7 @@ print("Missing values in first_order have been imputed using KNN.")
 
 # Input missing values in product_count using KNNImputer:
 
-# In[15]:
+# In[20]:
 
 
 # Select rows where "product_count" is NaN
@@ -271,7 +307,7 @@ print("Missing values in product_count have been imputed using KNN.")
 
 # 2. In case of categorical features, the strategie we used to deal with missing values is input with the mode:
 
-# In[16]:
+# In[21]:
 
 
 # Input missing values in categorical features using mode:
@@ -283,7 +319,7 @@ for column in mode_variables:
 
 # To check if every missing value, has been taken.
 
-# In[17]:
+# In[22]:
 
 
 missing_percentage = ((df.isnull().sum() / len(df)) * 100).sort_values(ascending=False)
@@ -306,7 +342,7 @@ print(f"Percentage of missing values:\n {missing_percentage}")
 
 # 1. Outliers visualization
 
-# In[18]:
+# In[23]:
 
 
 sns.set()
@@ -330,8 +366,6 @@ plt.tight_layout()
 plt.show()
 
 
-# ## <span style="color:yellow"> TRATAR OUTLIERS INDIVIDUALMENTE</span> 
-
 # 2. Outliers removal
 
 # There is two methods to treat with outliers:
@@ -342,7 +376,7 @@ plt.show()
 
 # - Using the Automatic method:
 
-# In[19]:
+# In[24]:
 
 
 # Compute the inter-quartile range
@@ -360,60 +394,9 @@ for feature in numerical_features:
 
 # Observations in which all features are outliers:
 
-# In[20]:
+# In[25]:
 
 
-def identify_outliers(dataframe, metric_features, lower_lim, upper_lim):
-    outliers = {}
-    obvious_outliers = []
-
-    for metric in metric_features:
-        if metric not in dataframe.columns:
-            continue
-        
-        if metric not in lower_lim or metric not in upper_lim:
-            continue
-        
-        outliers[metric] = []
-        llim = lower_lim[metric]
-        ulim = upper_lim[metric]
-        
-        for i, value in enumerate(dataframe[metric]):
-            if pd.isna(value):
-                continue
-            
-            if value < llim or value > ulim:
-                outliers[metric].append(value)
-        
-        print(f"Total outliers in {metric}: {len(outliers[metric])}")
-
-    # Check for observations that are outliers in all features (Obvious Outliers)
-    for index, row in dataframe.iterrows():
-        is_global_outlier = True
-        for metric in metric_features:
-            if metric not in dataframe.columns or metric not in lower_lim or metric not in upper_lim:
-                is_global_outlier = False
-                break
-            
-            value = row[metric]
-            if pd.isna(value):
-                is_global_outlier = False
-                break
-            
-            llim = lower_lim[metric]
-            ulim = upper_lim[metric]
-            
-            if llim <= value <= ulim:
-                is_global_outlier = False
-                break
-        
-        if is_global_outlier:
-            obvious_outliers.append(index)
-    print("-----------------------------")
-    print(f"Total global outliers: {len(obvious_outliers)}")
-    return outliers, obvious_outliers
-    
-    
 outliers, obvious_outliers = identify_outliers(df, numerical_features, lower_lim, upper_lim)
 
 
@@ -421,10 +404,10 @@ outliers, obvious_outliers = identify_outliers(df, numerical_features, lower_lim
 # 
 # Check if there is any observation only with outliers, except on these features.
 
-# In[21]:
+# In[26]:
 
 
-metric_features_test = numerical_df.drop(columns=['HR_0', 'last_order', 'first_order'])
+metric_features_test = numerical_df.drop(columns=['last_order', 'first_order'])
 
 outliers, obvious_outliers = identify_outliers(df, metric_features_test, lower_lim, upper_lim)
 
@@ -433,7 +416,7 @@ outliers, obvious_outliers = identify_outliers(df, metric_features_test, lower_l
 
 # Observations in which at least one feature is an outlier:
 
-# In[22]:
+# In[27]:
 
 
 filters_iqr = []                                            
@@ -445,13 +428,13 @@ for metric in numerical_features:
 filters_iqr_all = pd.concat(filters_iqr, axis=1).all(axis=1)
 
 
-# In[23]:
+# In[28]:
 
 
 filters_iqr_all
 
 
-# In[24]:
+# In[29]:
 
 
 len(df[~filters_iqr_all])
@@ -466,7 +449,7 @@ print(f"Percentage of data kept after removing outliers: {percentage_data_kept}%
 
 # - Using the manual method:
 
-# In[25]:
+# In[30]:
 
 
 filters_manual1 = (
@@ -572,13 +555,13 @@ filters_manual1 = (
 df_out_man1 = df[filters_manual1]
 
 
-# In[26]:
+# In[31]:
 
 
 print('Percentage of data kept after removing outliers:', 100*(np.round(df_out_man1.shape[0] / df.shape[0], decimals=5)))
 
 
-# In[27]:
+# In[32]:
 
 
 filters_manual2 = (
@@ -684,13 +667,13 @@ filters_manual2 = (
 df_out_man2 = df[filters_manual2]
 
 
-# In[28]:
+# In[33]:
 
 
 print('Percentage of data kept after removing outliers:', 100*(np.round(df_out_man2.shape[0] / df.shape[0], decimals=5)))
 
 
-# In[29]:
+# In[34]:
 
 
 filters_manual3 = (
@@ -796,7 +779,7 @@ filters_manual3 = (
 df_out_man3 = df[filters_manual3]
 
 
-# In[30]:
+# In[35]:
 
 
 # Number of observations with at least one features considered an outlier
@@ -808,13 +791,13 @@ print(f"Percentage of data kept after removing outliers: {percentage_data_kept_m
 
 # We conclude that we should see what is common to both methods and remove only that because the automatic method is removing a very high percentage of the data.
 
-# In[31]:
+# In[36]:
 
 
 df = df[(filters_iqr_all | filters_manual3)]
 
 
-# In[32]:
+# In[37]:
 
 
 sns.set()
@@ -844,7 +827,7 @@ plt.show()
 # 
 # <a href="#top">Top &#129033;</a>
 
-# In[33]:
+# In[38]:
 
 
 # Store in df_preprocessing the DataFrame of our dataset df
